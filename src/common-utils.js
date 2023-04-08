@@ -30,6 +30,9 @@ export const hexToRgb = (hex, forShaders = false) => {
  * @returns {Promise<THREE.Texture>}
  */
 export const loadHDRI = (url, renderer) => {
+    // pmrem code taken from https://github.com/mrdoob/three.js/blob/master/examples/webgl_pmrem_test.html
+    // tried to use pmrem to help alleviate the blocky artifacts due to roughness, see also:
+    // https://discourse.threejs.org/t/low-quality-envmap-look-with-roughness/21669/5
     const pmremGenerator = new THREE.PMREMGenerator( renderer );
     pmremGenerator.compileEquirectangularShader();
 
