@@ -32,11 +32,11 @@ export const hexToRgb = (hex, forShaders = false) => {
 export const loadHDRI = (url, renderer) => {
     const pmremGenerator = new THREE.PMREMGenerator( renderer );
     pmremGenerator.compileEquirectangularShader();
-    
+
     return new Promise((resolve) => {
         const hdrEquirect = new RGBELoader().load(url, function (texture) {
             // hdrEquirect.mapping = THREE.EquirectangularReflectionMapping
-            radianceMap = pmremGenerator.fromEquirectangular( texture ).texture;
+            const radianceMap = pmremGenerator.fromEquirectangular( texture ).texture;
             pmremGenerator.dispose();
             resolve(radianceMap)
         })
