@@ -35,7 +35,7 @@ vec2 voronoi( in vec3 x, in float time )
         }
     }
 
-    return vec2(sqrt(m.x), m.y+m.z+m.w);
+    return vec2(m.x, m.y+m.z+m.w);
 }
 
 #pragma glslify: export(voronoi)
