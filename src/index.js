@@ -20,7 +20,7 @@ THREE.ColorManagement.enabled = true;
 const params = {
   // general scene params
   clearcoat: 0.3,
-  ambientLight: 0.3,
+  ambientLight: 1.0,
   envIntensity: 0.5
 }
 const uniforms = {
@@ -69,14 +69,7 @@ let app = {
     const hdrEquirect = await loadHDRI("https://projects.arkon.digital/threejs/hdr/shanghai_bund_1k.hdr", renderer)
 
     const sphereGeometry = new THREE.SphereGeometry(1, 64, 64)
-    const sphereMaterial = new THREE.MeshPhysicalMaterial({
-      // color: new THREE.Color(0xff0000),
-      roughness: 0.5,
-      // metalness: 0.6,
-      clearcoat: params.clearcoat,
-      envMap: hdrEquirect,
-      envMapIntensity: params.envIntensity
-    })
+    const sphereMaterial = new THREE.MeshPhysicalMaterial()
     sphereMaterial.onBeforeCompile = shader => {
       shader.uniforms.time = { value: 0 };
 
@@ -118,6 +111,17 @@ let app = {
           return c.z*mix(K.xxx,saturate(abs(fract(c.x+K.xyz)*6.-K.w)-K.x),c.y);
         }
 
+        float cubicSmoothstep(float x){
+          return pow(4.*x*(1.-x),3.);
+        }
+
+        //  Function from Iñigo Quiles
+        //  www.iquilezles.org/www/articles/functions/functions.htm
+        float pcurve( float x, float a, float b ){
+            float k = pow(a+b,a+b) / (pow(a,a)*pow(b,b));
+            return k * pow( x, a ) * pow( 1.0-x, b );
+        }
+
         uniform float time;
         varying vec3 v_pos;
         varying vec2 vUv;
@@ -134,52 +138,17 @@ let app = {
         'vec4 diffuseColor = vec4( diffuse, opacity );', //we will swap out this chunk
         `
         vec2 res = voronoi(v_pos*3., time*0.3);
-        vec3 mycolor = vec3(1.-res.x) / 2.;
-        vec3 nPos = normalize(v_pos);
-        // 1. (OK) remap all axis to 0.-1. but overall brighter
-        // mycolor = (nPos + vec3(1.0)) / 2.;
-        // 2. (NOK) somehow deal with the black region
-        // mycolor = nPos;
-        // mycolor.y = abs(mycolor.y);
-        // 3. (NOK) map HSL to the sphere
-        // mycolor = hsv2rgb(vec3(posToTheta(v_pos) / PI, 1., 1.));
-        // 4. (OK) map to trigonometry and remap back to rgb
-        // mycolor.r = (cos(v_pos.x * PI) + 1.) / 2.;
-        // mycolor.g = (sin(v_pos.y * PI) + 1.) / 2.;
-        // mycolor.b = (sin(v_pos.z * PI) + 2.) / 3.;
-        // 5. (OK) use mix() to mix colors however I want
-        // mycolor = mix(vec3(0.0,0.0,1.0), vec3(1.0,0.0,0.0), (v_pos.z+1.0)/2.0);
-        // 6. (OK) use smoothstep
-        mycolor.r += smoothstep(0.5, 1.0, -v_pos.z) + smoothstep(0.5, 1.0, v_pos.x) + (cos(v_pos.y * PI + PI) + 1.) / 2.;
-        mycolor.g += smoothstep(0.5, 1.0, -v_pos.x) + (cos(v_pos.y * PI + PI) + 1.) / 2.;
-        mycolor.b += smoothstep(0.5, 1.0, v_pos.z) + smoothstep(0.5, 1.0, -v_pos.z);
+        // darken by pow
+        vec3 mycolor = vec3(pow(res.x, 2.0));
+        // emphasis on blue
+        float blue = mycolor.b * 1.5;
+        mycolor.b = blue * (1. - smoothstep(0.9,1.0,res.x));
+        mycolor.r = cubicSmoothstep(mycolor.r);
+        mycolor.g = cubicSmoothstep(mycolor.g);
         vec4 diffuseColor = vec4( mycolor, opacity );
         `
       )
-      
-      shader.fragmentShader = shader.fragmentShader.replace(
-        `#include <metalnessmap_fragment>`,
-        `float metalnessFactor = metalness;
-        metalnessFactor = clamp(res.x, 0.2, 1.0);
-        `
-      )
-        
-      // shader.fragmentShader = shader.fragmentShader.replace(
-      //   `#include <roughnessmap_fragment>`,
-      //   `float roughnessFactor = roughness;
-      //   roughnessFactor = (1.-res.x)/2.;
-      //   `
-      // )
-  
-      // shader.fragmentShader = shader.fragmentShader.replace(
-      //   `#include <normal_fragment_maps>`,
-      //   `#include <normal_fragment_maps>
-      //   float cosRes = dot(res.yzw, normal) / length(res.yzw);
-      //   if (cosRes < 0.)
-      //   normal = normalize(-res.yzw);
-      //   `
-      // )
-          
+
       sphereMaterial.userData.shader = shader;
     }
     this.sphere = new THREE.Mesh(sphereGeometry, sphereMaterial)
