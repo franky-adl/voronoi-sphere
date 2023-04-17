@@ -7,14 +7,14 @@ varying vec3 v_pos;
 
 // Function from Iñigo Quiles
 // www.iquilezles.org/www/articles/functions/functions.htm
-// for visual demo, go to https://thebookofshaders.com/edit.php#05/pcurve.frag
+// for visual demo, go to https://thebookofshaders.com/edit.php#05/parabola.frag
 float parabola( float x, float k ){
     return pow(4.*x*(1.-x), k);
 }
 
 // Function from Iñigo Quiles
 // www.iquilezles.org/www/articles/functions/functions.htm
-// for visual demo, go to https://thebookofshaders.com/edit.php#05/parabola.frag
+// for visual demo, go to https://thebookofshaders.com/edit.php#05/pcurve.frag
 float pcurve( float x, float a, float b ){
     float k = pow(a+b,a+b) / (pow(a,a)*pow(b,b));
     return k * pow( x, a ) * pow( 1.0-x, b );
