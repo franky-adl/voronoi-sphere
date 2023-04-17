@@ -17,12 +17,6 @@ THREE.ColorManagement.enabled = true;
 /**************************************************
  * 0. Tweakable parameters for the scene
  *************************************************/
-const params = {
-  // general scene params
-  clearcoat: 0.3,
-  ambientLight: 1.0,
-  envIntensity: 0.5
-}
 const uniforms = {
   ...getDefaultUniforms(),
   u_bFactor: { value: 3.0 },
@@ -42,9 +36,6 @@ let scene = new THREE.Scene()
 let renderer = createRenderer({ antialias: true }, (_renderer) => {
   // e.g. uncomment below if you want the output to be in sRGB color space
   _renderer.outputEncoding = THREE.sRGBEncoding
-  _renderer.debug.onShaderError = (gl, program, glVertexShader, glFragmentShader) => {
-    console.log("error")
-  }
 })
 
 // Create the camera
@@ -71,8 +62,8 @@ let app = {
       vertexShader: vertexShader,
       fragmentShader: fragmentShader
     })
-    this.sphere = new THREE.Mesh(sphereGeometry, sphereMaterial)
-    scene.add(this.sphere)
+    const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial)
+    scene.add(sphere)
 
     // GUI controls
     const gui = new dat.GUI()
